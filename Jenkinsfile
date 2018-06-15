@@ -53,11 +53,11 @@ pipeline {
     post { 
         success{ 
             sh '$REDIS_CLI -h $REDIS_HOST SET is-require-${PRO_NAME}-b-update Y'
-            /*slackSend (color: '#33ff36', message: "Sucessed built: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]\nView Report: (${env.BUILD_URL})\nTest URL: (http://$service-a-${IMG_NAME}.apps.$OCP_BASE_URL/ui)'")*/
+            /slackSend (color: '#33ff36', message: "Sucessed built: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]\nView Report: (${env.BUILD_URL})'")
         }
         failure {
           sh 'echo fail'
-          /*slackSend (color: '#ff9f33', message: "Failed build: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]\nView Report: (${env.BUILD_URL})'")*/
+          slackSend (color: '#ff9f33', message: "Failed build: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]\nView Report: (${env.BUILD_URL})'")
         }
     }
 }
