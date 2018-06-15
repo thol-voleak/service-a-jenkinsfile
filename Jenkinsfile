@@ -37,13 +37,14 @@ pipeline {
                 sh "$OC project ${PRO_NAME}"
                 try{
                   sh "$OC get svc service-a"
-                  sh '$OC set route-backends ${PRO_NAME} service-a=100 service-b=0'
+                  sh '$OC set route-backends ${IMG_NAME} service-a=100 service-b=0'
                   sh "$OC rollout latest dc/service-a -n ${PRO_NAME}"
                   sh "$OC rollout status dc/service-a"
-                  sh '$OC set route-backends ${PRO_NAME} service-a=100 service-b=0'
+                  sh '$OC set route-backends ${IMG_NAME} service-a=100 service-b=0'
                 }catch(Exception ex){
-                  sh "$OC new-app ${PRO_NAME}/${PRO_NAME}:latest --name=service-a"
-                  sh "$OC expose svc/service-a --hostname=service-a-${PRO_NAME}.apps.$OCP_BASE_URL"
+                  sh "$OC new-app ${PRO_NAME}/${IMG_NAME}:latest --name=service-a"
+                  sh "$OC expose svc/service-a --hostname=service-a-${IMG_NAME}.apps.$OCP_BASE_URL"
+                  sh "$OC expose svc/service-a --hostname=${IMG_NAME}.apps.$OCP_BASE_URL"
                 }
               }
             }
@@ -53,7 +54,7 @@ pipeline {
         success{ 
             sh '##############is-require-${PRO_NAME}-b-update'
             sh '$REDIS_CLI -h $REDIS_HOST SET is-require-${PRO_NAME}-b-update Y'
-            slackSend (color: '#33ff36', message: "Sucessed built: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]\nView Report: (${env.BUILD_URL})\nTest URL: (http://$service-a-${PRO_NAME}.apps.$OCP_BASE_URL/ui)'")
+            slackSend (color: '#33ff36', message: "Sucessed built: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]\nView Report: (${env.BUILD_URL})\nTest URL: (http://$service-a-${IMG_NAME}.apps.$OCP_BASE_URL/ui)'")
         }
         failure {
           //sh 'echo fail'
