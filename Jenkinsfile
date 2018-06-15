@@ -7,19 +7,15 @@ pipeline {
         stage('Checkout'){
           steps{
             script{
-              git branch: 'master',credentialsId: 'github-credential',url: 'https://github.com/thol-voleak/spring-boot-openshift-hello-world.git'
+              git branch: '$BRANCH',credentialsId: 'bitbucket-credential',url: '$GIT_URL'
             }
           }
         }
         stage('Build'){
             steps{
-                sh '$MSG'
-              sh "echo ${PRO_NAME} and ${APP_NAME} and ${IMG_NAME}"
-              //sh "echo build"
               sh "mvn clean install -DskipTests"
             }
         }
-        
         stage('Smoke Test+Push'){
             steps{
               //sh "echo test"
@@ -37,16 +33,17 @@ pipeline {
         
         stage('Deployment'){ 
             steps{ 
-              //sh "echo deployment"
               script{
                 sh "$OC project ${PRO_NAME}"
                 try{
-                  sh "$OC get svc ${APP_NAME}"
-                  sh "$OC rollout latest dc/${APP_NAME} -n test1"
-                  sh "$OC rollout status dc/${APP_NAME}"
+                  sh "$OC get svc service-a"
+                  sh '$OC set route-backends ${PRO_NAME} service-a=100 service-b=0'
+                  sh "$OC rollout latest dc/service-a -n ${PRO_NAME}"
+                  sh "$OC rollout status dc/service-a"
+                  sh '$OC set route-backends ${PRO_NAME} service-a=100 service-a=0'
                 }catch(Exception ex){
-                  sh "$OC new-app ${PRO_NAME}/${IMG_NAME}:latest --name=${APP_NAME}"
-                  sh "$OC expose svc/${APP_NAME} --hostname=${APP_NAME}-${PRO_NAME}.apps.$OCP_BASE_URL"
+                  sh "$OC new-app ${PRO_NAME}/${PRO_NAME}:latest --name=service-a"
+                  sh "$OC expose svc/service-a --hostname=service-a-${PRO_NAME}.apps.$OCP_BASE_URL"
                 }
               }
             }
@@ -55,7 +52,8 @@ pipeline {
     post { 
         success{ 
             //sh 'echo sucessed'
-            slackSend (color: '#33ff36', message: "Sucessed built: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]\nView Report: (${env.BUILD_URL})\nTest URL: (http://${APP_NAME}-${PRO_NAME}.apps.$OCP_BASE_URL/test)'")
+            sh '$REDIS_CLI -h $REDIS_HOST SET is-require-${PRO_NAME}-b-update Y'
+            slackSend (color: '#33ff36', message: "Sucessed built: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]\nView Report: (${env.BUILD_URL})\nTest URL: (http://$service-a-${PRO_NAME}.apps.$OCP_BASE_URL/ui)'")
         }
         failure {
           //sh 'echo fail'
