@@ -37,7 +37,7 @@ pipeline {
                 sh "$OC project ${PRO_NAME}"
                 try{
                   sh "$OC get svc service-a"
-                  sh '$OC set route-backends ${IMG_NAME} service-a=100 service-b=0'
+                  sh '$OC set route-backends ${IMG_NAME} service-a=0 service-b=100'
                   sh "$OC rollout latest dc/service-a -n ${PRO_NAME}"
                   sh "$OC rollout status dc/service-a"
                   sh '$OC set route-backends ${IMG_NAME} service-a=100 service-b=0'
